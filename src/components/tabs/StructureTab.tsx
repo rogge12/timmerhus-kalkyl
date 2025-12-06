@@ -9,7 +9,7 @@ interface Props {
 export function StructureTab({ inputs, calculated }: Props) {
   const { roofType, includeMellanvagg, wallHeight, avdragVaggarea, innertakTyp } = inputs;
   const { 
-    varvSnitt, totalLogg, roofArea, innerArea, 
+    varvSnitt, totalLogg, totalLoggNetto, roofArea, innerArea, 
     gabelHeight, totalHeight, vaggAreaTotal, vaggAreaNetto,
     innerVaggArea, innertakArea, innerOmkrets,
     timmerYtter, timmerGavlar, timmerMellan,
@@ -33,8 +33,8 @@ export function StructureTab({ inputs, calculated }: Props) {
           icon="📊"
         />
         <MetricCard 
-          label="Total timmerlängd" 
-          value={`${formatNumber(totalLogg, 1)} m`} 
+          label={avdragVaggarea > 0 ? "Timmerlängd netto" : "Total timmerlängd"} 
+          value={`${formatNumber(avdragVaggarea > 0 ? totalLoggNetto : totalLogg, 1)} m`} 
           icon="📏"
         />
         <MetricCard 
@@ -97,10 +97,11 @@ export function StructureTab({ inputs, calculated }: Props) {
             { label: 'Ytterväggar', value: `${formatNumber(timmerYtter, 1)} m` },
             { label: 'Gavlar', value: `${formatNumber(timmerGavlar, 1)} m` },
             { label: 'Mellanvägg', value: `${formatNumber(timmerMellan, 1)} m` },
-            { label: 'Total timmerlängd', value: `${formatNumber(totalLogg, 1)} m`, highlight: true },
-            { label: 'Väggyta totalt (brutto)', value: `${formatNumber(vaggAreaTotal, 2)} m²`, highlight: true },
+            { label: 'Timmerlängd (brutto)', value: `${formatNumber(totalLogg, 1)} m`, highlight: true },
+            { label: 'Väggyta (brutto)', value: `${formatNumber(vaggAreaTotal, 2)} m²`, highlight: true },
             ...(avdragVaggarea > 0 ? [
               { label: `Avdrag (fönster/dörrar)`, value: `-${formatNumber(avdragVaggarea, 2)} m²` },
+              { label: 'Timmerlängd netto', value: `${formatNumber(totalLoggNetto, 1)} m`, highlight: true },
               { label: 'Väggyta netto', value: `${formatNumber(vaggAreaNetto, 2)} m²`, highlight: true },
             ] : []),
             { label: 'Invändig omkrets', value: `${formatNumber(innerOmkrets, 2)} m` },

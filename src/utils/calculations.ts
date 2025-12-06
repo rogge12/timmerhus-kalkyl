@@ -61,6 +61,11 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
   
   // Netto väggarea (minus avdrag för fönster/dörrar)
   const vaggAreaNetto = Math.max(vaggAreaTotal - avdragVaggarea, 0);
+  
+  // Netto timmerlängd - proportionellt reducerad baserat på väggarea-avdrag
+  const totalLoggNetto = vaggAreaTotal > 0 
+    ? totalLogg * (vaggAreaNetto / vaggAreaTotal)
+    : totalLogg;
 
   const roofLenEff = L + 2 * overhang;
   let roofRun: number, roofSlope: number, roofArea: number;
@@ -115,7 +120,7 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
 
   return {
     antalVarvLow, antalVarvHigh, varvSnitt,
-    timmerYtter, timmerGavlar, timmerMellan, totalLogg, 
+    timmerYtter, timmerGavlar, timmerMellan, totalLogg, totalLoggNetto,
     vaggAreaTotal,
     vaggAreaNetto,
     innerVaggArea,

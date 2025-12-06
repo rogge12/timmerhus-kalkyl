@@ -29,6 +29,7 @@ export interface CalculatedValues {
   timmerGavlar: number;
   timmerMellan: number;
   totalLogg: number;
+  totalLoggNetto: number;  // Timmerlängd minus avdrag för fönster/dörrar
   vaggAreaTotal: number;
   vaggAreaNetto: number;  // Väggarea minus avdrag för fönster/dörrar
   innerVaggArea: number;  // Invändig väggarea (för innerpanel etc)
