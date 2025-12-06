@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { BuildingInputs, CalculatedValues, MaterialRow } from '../../types';
 import { formatNumber, formatCurrency } from '../../utils/calculations';
 
@@ -50,6 +50,22 @@ export function TimeQuoteTab({ inputs, calculated, materials }: Props) {
     'Tak': '🏠',
     'Vägg': '🧱',
     'Grund': '🪨',
+    'Invändigt': '🔲',
+  };
+
+  // Track which categories are expanded
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (kategori: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(kategori)) {
+        newSet.delete(kategori);
+      } else {
+        newSet.add(kategori);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -59,26 +75,56 @@ export function TimeQuoteTab({ inputs, calculated, materials }: Props) {
         <h2 className="font-display text-xl font-semibold text-slate-800 mb-4">⏱ Tidskalkyl per kategori</h2>
         
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(timeByCategory).map(([kategori, data]) => (
-            <div key={kategori} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">{categoryIcons[kategori] || '📦'}</span>
-                <h3 className="font-semibold text-slate-700">{kategori}</h3>
-              </div>
-              <p className="text-2xl font-bold text-slate-800 mb-2">{formatNumber(data.tid, 1)} h</p>
-              <ul className="text-xs text-slate-500 space-y-1">
-                {data.items.slice(0, 4).map((item, i) => (
-                  <li key={i} className="flex justify-between">
-                    <span className="truncate mr-2">{item.artikel}</span>
-                    <span className="text-slate-600">{formatNumber(item.tid, 1)}h</span>
-                  </li>
-                ))}
-                {data.items.length > 4 && (
-                  <li className="text-slate-400">+{data.items.length - 4} fler...</li>
+          {Object.entries(timeByCategory).map(([kategori, data]) => {
+            const isExpanded = expandedCategories.has(kategori);
+            const hasMore = data.items.length > 4;
+            const itemsToShow = isExpanded ? data.items : data.items.slice(0, 4);
+            
+            return (
+              <div 
+                key={kategori} 
+                className={`bg-white rounded-xl p-4 border border-slate-200 shadow-sm transition-all duration-300 ${
+                  isExpanded ? 'row-span-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">{categoryIcons[kategori] || '📦'}</span>
+                  <h3 className="font-semibold text-slate-700">{kategori}</h3>
+                </div>
+                <p className="text-2xl font-bold text-slate-800 mb-2">{formatNumber(data.tid, 1)} h</p>
+                <ul className="text-xs text-slate-500 space-y-1">
+                  {itemsToShow.map((item, i) => (
+                    <li key={i} className="flex justify-between">
+                      <span className="truncate mr-2">{item.artikel}</span>
+                      <span className="text-slate-600 whitespace-nowrap">{formatNumber(item.tid, 1)}h</span>
+                    </li>
+                  ))}
+                </ul>
+                {hasMore && (
+                  <button 
+                    onClick={() => toggleCategory(kategori)}
+                    className="mt-2 text-xs text-primary-500 hover:text-primary-700 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Visa färre
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        +{data.items.length - 4} fler...
+                      </>
+                    )}
+                  </button>
                 )}
-              </ul>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Time summary */}
