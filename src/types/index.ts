@@ -17,6 +17,8 @@ export interface BuildingInputs {
   prisTimmerUt: number;
   timkostnad: number;
   momsPct: number;
+  avdragVaggarea: number;  // Avdrag för fönster/dörrar (m²)
+  innertakTyp: 'sned' | 'platt';  // Snedtak följer taklutning, platt = som golvarea
 }
 
 export interface CalculatedValues {
@@ -28,6 +30,9 @@ export interface CalculatedValues {
   timmerMellan: number;
   totalLogg: number;
   vaggAreaTotal: number;
+  vaggAreaNetto: number;  // Väggarea minus avdrag för fönster/dörrar
+  innerVaggArea: number;  // Invändig väggarea (för innerpanel etc)
+  innertakArea: number;   // Innertak area (sned eller platt)
   roofArea: number;
   innerArea: number;
   innerL: number;
@@ -41,6 +46,7 @@ export interface CalculatedValues {
   roofSlope: number;
   meterPerVarv: number;  // Meter timmer per stockvarv (inkl knututstick)
   syllOmkrets: number;   // Omkrets för syllvirke (utan knututstick)
+  innerOmkrets: number;  // Invändig omkrets
 }
 
 // Material from Excel file
@@ -99,4 +105,6 @@ export const defaultInputs: BuildingInputs = {
   prisTimmerUt: 120,
   timkostnad: 450,
   momsPct: 25,
+  avdragVaggarea: 0,  // Avdrag för fönster/dörrar
+  innertakTyp: 'sned',  // Snedtak som standard
 };

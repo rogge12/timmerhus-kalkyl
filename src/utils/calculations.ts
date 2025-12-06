@@ -4,7 +4,7 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
   const {
     roofType, includeMellanvagg, length: L, width: B, wallHeight: h_wall,
     roofAngle: angle_deg, overhang, knut, timmerThickness: timmer_t,
-    stockHeight: stock_h, ccGolv, ccStro, ccBar
+    stockHeight: stock_h, ccGolv, ccStro, ccBar, avdragVaggarea, innertakTyp
   } = inputs;
 
   const angle_rad = (angle_deg * Math.PI) / 180;
@@ -58,6 +58,9 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
 
   const totalLogg = timmerYtter + timmerGavlar + timmerMellan;
   const vaggAreaTotal = vaggAreaYtter + vaggAreaGavlar + vaggAreaMellan;
+  
+  // Netto väggarea (minus avdrag för fönster/dörrar)
+  const vaggAreaNetto = Math.max(vaggAreaTotal - avdragVaggarea, 0);
 
   const roofLenEff = L + 2 * overhang;
   let roofRun: number, roofSlope: number, roofArea: number;
@@ -77,6 +80,26 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
   const innerArea = innerL * innerB;
   const totalHeight = h_wall + gabelHeight;
 
+  // Invändig omkrets och väggarea
+  const innerOmkrets = 2 * (innerL + innerB);
+  const innerVaggArea = innerOmkrets * h_wall;
+
+  // Innertak area - beror på typ
+  let innertakArea: number;
+  if (innertakTyp === 'platt') {
+    // Platt innertak = samma som golvarea
+    innertakArea = innerArea;
+  } else {
+    // Snedtak - följer taklutningen invändigt
+    if (roofType === 'sadeltak') {
+      const innerRoofSlope = (innerB / 2) / Math.cos(angle_rad);
+      innertakArea = 2 * innerL * innerRoofSlope;
+    } else {
+      const innerRoofSlope = innerB / Math.cos(angle_rad);
+      innertakArea = innerL * innerRoofSlope;
+    }
+  }
+
   const antalGolvAser = ccGolv > 0 ? Math.ceil(L / ccGolv) : 0;
   const golvasLen = antalGolvAser * innerB;
 
@@ -94,10 +117,14 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
     antalVarvLow, antalVarvHigh, varvSnitt,
     timmerYtter, timmerGavlar, timmerMellan, totalLogg, 
     vaggAreaTotal,
+    vaggAreaNetto,
+    innerVaggArea,
+    innertakArea,
     roofArea, innerArea, innerL, innerB, gabelHeight, totalHeight,
     golvasLen, stroLaktLen, barLaktLen, roofLenEff, roofSlope,
     meterPerVarv,
-    syllOmkrets
+    syllOmkrets,
+    innerOmkrets
   };
 }
 
@@ -107,8 +134,11 @@ export function calculateMaterialQuantities(
   inputs: BuildingInputs,
   calculated: CalculatedValues
 ): MaterialRow[] {
-  const { innerArea, roofArea, vaggAreaTotal, roofLenEff, roofSlope, meterPerVarv, syllOmkrets } = calculated;
-  const { antalTakasar, length, width } = inputs;
+  const { 
+    innerArea, roofArea, vaggAreaTotal, vaggAreaNetto, innerVaggArea, innertakArea,
+    roofLenEff, roofSlope, syllOmkrets 
+  } = calculated;
+  const { antalTakasar } = inputs;
 
   return prislista.map((mat, index) => {
     let mangd = 0;
@@ -124,8 +154,8 @@ export function calculateMaterialQuantities(
       if (mat.artikel === 'Timmer (tillverkning)' || 
           mat.artikel === 'Montering stomme' || 
           mat.artikel === 'Timmerväggar') {
-        // Dessa använder väggarea (m²)
-        mangd = vaggAreaTotal;
+        // Dessa använder väggarea netto (m²) - minus fönster/dörrar
+        mangd = vaggAreaNetto;
       } else if (mat.artikel === 'Syllvirke 45x95') {
         // Syllvirke ligger under väggarna, inte under knutarna
         mangd = syllOmkrets;
@@ -147,9 +177,19 @@ export function calculateMaterialQuantities(
         mangd = roofArea * mat.mangdPerM2;
       }
     } else if (mat.kategori === 'Vägg') {
-      // Wall materials based on wall area
+      // Wall materials based on wall area (netto - minus fönster/dörrar)
       if (mat.mangdPerM2 > 0) {
-        mangd = vaggAreaTotal * mat.mangdPerM2;
+        mangd = vaggAreaNetto * mat.mangdPerM2;
+      }
+    } else if (mat.kategori === 'Invändigt') {
+      // Invändiga material (innerpanel, innertakspanel etc.)
+      if (mat.artikel.includes('innervägg') || mat.artikel.includes('Innervägg')) {
+        mangd = innerVaggArea * (mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1);
+      } else if (mat.artikel.includes('innertak') || mat.artikel.includes('Innertak')) {
+        mangd = innertakArea * (mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1);
+      } else if (mat.mangdPerM2 > 0) {
+        // Default: use innerArea
+        mangd = innerArea * mat.mangdPerM2;
       }
     } else if (mat.kategori === 'Grund') {
       // Foundation materials based on inner area

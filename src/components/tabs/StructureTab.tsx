@@ -7,10 +7,11 @@ interface Props {
 }
 
 export function StructureTab({ inputs, calculated }: Props) {
-  const { roofType, includeMellanvagg, wallHeight } = inputs;
+  const { roofType, includeMellanvagg, wallHeight, avdragVaggarea, innertakTyp } = inputs;
   const { 
     varvSnitt, totalLogg, roofArea, innerArea, 
-    gabelHeight, totalHeight, vaggAreaTotal,
+    gabelHeight, totalHeight, vaggAreaTotal, vaggAreaNetto,
+    innerVaggArea, innertakArea, innerOmkrets,
     timmerYtter, timmerGavlar, timmerMellan,
     roofLenEff, roofSlope, innerL, innerB,
     antalVarvLow, antalVarvHigh, meterPerVarv, syllOmkrets
@@ -25,7 +26,7 @@ export function StructureTab({ inputs, calculated }: Props) {
       </div>
 
       {/* Key metrics grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard 
           label="Antal stockvarv (snitt)" 
           value={formatNumber(varvSnitt, 1)} 
@@ -37,7 +38,12 @@ export function StructureTab({ inputs, calculated }: Props) {
           icon="📏"
         />
         <MetricCard 
-          label="Takarea" 
+          label={avdragVaggarea > 0 ? "Väggyta netto" : "Väggyta totalt"} 
+          value={`${formatNumber(avdragVaggarea > 0 ? vaggAreaNetto : vaggAreaTotal, 1)} m²`} 
+          icon="🧱"
+        />
+        <MetricCard 
+          label="Takarea (yttre)" 
           value={`${formatNumber(roofArea, 1)} m²`} 
           icon="🏠"
         />
@@ -45,6 +51,11 @@ export function StructureTab({ inputs, calculated }: Props) {
           label="Golvarea" 
           value={`${formatNumber(innerArea, 1)} m²`} 
           icon="⬛"
+        />
+        <MetricCard 
+          label="Innertakyta" 
+          value={`${formatNumber(innertakArea, 1)} m²`} 
+          icon="🔲"
         />
       </div>
 
@@ -87,7 +98,13 @@ export function StructureTab({ inputs, calculated }: Props) {
             { label: 'Gavlar', value: `${formatNumber(timmerGavlar, 1)} m` },
             { label: 'Mellanvägg', value: `${formatNumber(timmerMellan, 1)} m` },
             { label: 'Total timmerlängd', value: `${formatNumber(totalLogg, 1)} m`, highlight: true },
-            { label: 'Väggyta totalt', value: `${formatNumber(vaggAreaTotal, 2)} m²`, highlight: true },
+            { label: 'Väggyta totalt (brutto)', value: `${formatNumber(vaggAreaTotal, 2)} m²`, highlight: true },
+            ...(avdragVaggarea > 0 ? [
+              { label: `Avdrag (fönster/dörrar)`, value: `-${formatNumber(avdragVaggarea, 2)} m²` },
+              { label: 'Väggyta netto', value: `${formatNumber(vaggAreaNetto, 2)} m²`, highlight: true },
+            ] : []),
+            { label: 'Invändig omkrets', value: `${formatNumber(innerOmkrets, 2)} m` },
+            { label: 'Invändig väggyta', value: `${formatNumber(innerVaggArea, 2)} m²`, highlight: true },
           ]} />
         </DetailCard>
 
@@ -96,13 +113,27 @@ export function StructureTab({ inputs, calculated }: Props) {
             <DetailList items={[
               { label: 'Effektiv taklängd', value: `${formatNumber(roofLenEff, 2)} m` },
               { label: 'Sned taklängd', value: `${formatNumber(roofSlope, 2)} m` },
-              { label: 'Takarea', value: `${formatNumber(roofArea, 1)} m²` },
+              { label: 'Takarea (yttre)', value: `${formatNumber(roofArea, 1)} m²` },
             ]} />
             <DetailList items={[
               { label: 'Invändig längd', value: `${formatNumber(innerL, 2)} m` },
               { label: 'Invändig bredd', value: `${formatNumber(innerB, 2)} m` },
               { label: 'Golvyta', value: `${formatNumber(innerArea, 2)} m²` },
             ]} />
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <DetailList items={[
+              { 
+                label: `Innertak (${innertakTyp === 'sned' ? 'snedtak' : 'platt'})`, 
+                value: `${formatNumber(innertakArea, 2)} m²`, 
+                highlight: true 
+              },
+            ]} />
+            <p className="text-xs text-slate-400 mt-1">
+              {innertakTyp === 'sned' 
+                ? 'Följer taklutningen invändigt' 
+                : 'Horisontellt tak (samma som golvyta)'}
+            </p>
           </div>
         </DetailCard>
       </div>
