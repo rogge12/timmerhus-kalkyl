@@ -179,6 +179,13 @@ export function calculateMaterialQuantities(
         mangd = antalTakasar * roofLenEff;
       } else if (mat.artikel.includes('Fotplåt') || mat.artikel.includes('Takfotsbräda') || mat.artikel.includes('Regnvatten')) {
         mangd = 2 * roofLenEff;
+      } else if (mat.artikel.includes('Vindskiveplåt')) {
+        // Vindskiveplåt: MangdPerM2 = täckning per plåt (t.ex. 1.9m)
+        // Antal = avrunda uppåt((sidor × takfall) / täckning)
+        const antalSidor = inputs.roofType === 'sadeltak' ? 2 : 1;
+        const tackningPerPlat = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1.9;
+        const totalLangd = antalSidor * roofSlope;
+        mangd = Math.ceil(totalLangd / tackningPerPlat);  // Antal plåtar (st)
       } else if (mat.artikel.includes('Vindskiv')) {
         // Vindskivor: MangdPerM2 = antal brädor per sida (t.ex. 4)
         // Sadeltak: 2 sidor × 4 brädor × takfall = 8 × takfall meter

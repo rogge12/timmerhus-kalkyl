@@ -24,6 +24,7 @@ const materialData = [
   { Kategori: "Tak", Artikel: "Takplåt", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.25, Inkopspris: 120, Forsaljningspris: 195, TaMed: true, Notering: "" },
   { Kategori: "Tak", Artikel: "Fotplåt", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.12, Inkopspris: 45, Forsaljningspris: 75, TaMed: true, Notering: "2 × taklängd" },
   { Kategori: "Tak", Artikel: "Vindskivor 22x145", Enhet: "lm", MangdPerM2: 4, Enhetstid: 0.40, Inkopspris: 55, Forsaljningspris: 95, TaMed: true, Notering: "4 brädor/sida × takfall (sadeltak: 8×, pulpet: 4×)" },
+  { Kategori: "Tak", Artikel: "Vindskiveplåt", Enhet: "st", MangdPerM2: 1.9, Enhetstid: 0.15, Inkopspris: 85, Forsaljningspris: 145, TaMed: true, Notering: "Täcker 1.9m/st, avrundas uppåt" },
   { Kategori: "Tak", Artikel: "Takfotsbräda 22x145", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.15, Inkopspris: 25, Forsaljningspris: 45, TaMed: true, Notering: "2 × taklängd" },
   { Kategori: "Tak", Artikel: "Regnvattensystem", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.20, Inkopspris: 85, Forsaljningspris: 145, TaMed: true, Notering: "2 × taklängd" },
   { Kategori: "Tak", Artikel: "Nockplåt", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.10, Inkopspris: 65, Forsaljningspris: 110, TaMed: true, Notering: "Taklängd" },
