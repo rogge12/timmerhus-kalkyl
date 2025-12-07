@@ -173,16 +173,22 @@ export function calculateMaterialQuantities(
       }
     } else if (mat.kategori === 'Tak') {
       // Roof materials
+      const antalTakfallKanter = inputs.roofType === 'sadeltak' ? 4 : 2;  // 4 kanter på sadeltak, 2 på pulpettak
+      
       if (mat.artikel === 'Takåsar') {
         mangd = antalTakasar * roofLenEff;
       } else if (mat.artikel.includes('Fotplåt') || mat.artikel.includes('Takfotsbräda') || mat.artikel.includes('Regnvatten')) {
         mangd = 2 * roofLenEff;
-      } else if (mat.artikel.includes('Vindskiv') || mat.artikel.includes('Nockplåt')) {
-        if (mat.artikel === 'Nockplåt') {
-          mangd = roofLenEff;
+      } else if (mat.artikel.includes('Vindskiv')) {
+        // Vindskivor: om enhet är "st", beräkna antal brädor (MangdPerM2 = antal per kant)
+        if (mat.enhet === 'st' && mat.mangdPerM2 > 0) {
+          mangd = antalTakfallKanter * mat.mangdPerM2;  // t.ex. 4 kanter × 2 = 8 st
         } else {
-          mangd = 4 * roofSlope;
+          // Annars beräkna i löpmeter
+          mangd = antalTakfallKanter * roofSlope;
         }
+      } else if (mat.artikel.includes('Nockplåt')) {
+        mangd = roofLenEff;
       } else if (mat.mangdPerM2 > 0) {
         // Area-based materials (råspont, takplåt, etc)
         mangd = roofArea * mat.mangdPerM2;

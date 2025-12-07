@@ -23,7 +23,7 @@ const materialData = [
   { Kategori: "Tak", Artikel: "Bärläkt 28x70", Enhet: "lm", MangdPerM2: 1.67, Enhetstid: 0.08, Inkopspris: 12, Forsaljningspris: 22, TaMed: true, Notering: "c/c 0.35" },
   { Kategori: "Tak", Artikel: "Takplåt", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.25, Inkopspris: 120, Forsaljningspris: 195, TaMed: true, Notering: "" },
   { Kategori: "Tak", Artikel: "Fotplåt", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.12, Inkopspris: 45, Forsaljningspris: 75, TaMed: true, Notering: "2 × taklängd" },
-  { Kategori: "Tak", Artikel: "Vindskivor 22x145", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.40, Inkopspris: 55, Forsaljningspris: 95, TaMed: true, Notering: "4 × takfall" },
+  { Kategori: "Tak", Artikel: "Vindskivor 22x145", Enhet: "st", MangdPerM2: 2, Enhetstid: 0.40, Inkopspris: 55, Forsaljningspris: 95, TaMed: true, Notering: "2 per kant × 4 kanter = 8 st (sadeltak)" },
   { Kategori: "Tak", Artikel: "Takfotsbräda 22x145", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.15, Inkopspris: 25, Forsaljningspris: 45, TaMed: true, Notering: "2 × taklängd" },
   { Kategori: "Tak", Artikel: "Regnvattensystem", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.20, Inkopspris: 85, Forsaljningspris: 145, TaMed: true, Notering: "2 × taklängd" },
   { Kategori: "Tak", Artikel: "Nockplåt", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.10, Inkopspris: 65, Forsaljningspris: 110, TaMed: true, Notering: "Taklängd" },
