@@ -181,18 +181,17 @@ export function calculateMaterialQuantities(
         mangd = 2 * roofLenEff;
       } else if (mat.artikel.includes('Vindskiveplåt')) {
         // Vindskiveplåt: MangdPerM2 = täckning per plåt (t.ex. 1.9m)
-        // Antal = avrunda uppåt((sidor × takfall) / täckning)
-        const antalSidor = inputs.roofType === 'sadeltak' ? 2 : 1;
+        // Antal = avrunda uppåt((takfall-kanter × takfall-längd) / täckning)
+        // Sadeltak: 4 takfall, Pulpettak: 2 takfall
         const tackningPerPlat = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1.9;
-        const totalLangd = antalSidor * roofSlope;
+        const totalLangd = antalTakfallKanter * roofSlope;
         mangd = Math.ceil(totalLangd / tackningPerPlat);  // Antal plåtar (st)
       } else if (mat.artikel.includes('Vindskiv')) {
-        // Vindskivor: MangdPerM2 = antal brädor per sida (t.ex. 4)
-        // Sadeltak: 2 sidor × 4 brädor × takfall = 8 × takfall meter
-        // Pulpettak: 1 sida × 4 brädor × takfall = 4 × takfall meter
-        const antalSidor = inputs.roofType === 'sadeltak' ? 2 : 1;
-        const antalBradorPerSida = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 4;  // Default 4
-        mangd = antalSidor * antalBradorPerSida * roofSlope;  // Total längd i meter
+        // Vindskivor: MangdPerM2 = antal brädor per takfall (t.ex. 2)
+        // Sadeltak: 4 takfall × 2 brädor × takfall-längd meter
+        // Pulpettak: 2 takfall × 2 brädor × takfall-längd meter
+        const antalBradorPerTakfall = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 2;  // Default 2
+        mangd = antalTakfallKanter * antalBradorPerTakfall * roofSlope;  // Total längd i meter
       } else if (mat.artikel.includes('Nockplåt')) {
         mangd = roofLenEff;
       } else if (mat.mangdPerM2 > 0) {
