@@ -22,7 +22,7 @@ const materialData = [
   { Kategori: "Tak", Artikel: "Ströläkt 12x50", Enhet: "lm", MangdPerM2: 2.0, Enhetstid: 0.04, Inkopspris: 8, Forsaljningspris: 15, TaMed: true, Notering: "c/c 0.6" },
   { Kategori: "Tak", Artikel: "Bärläkt 28x70", Enhet: "lm", MangdPerM2: 1.67, Enhetstid: 0.08, Inkopspris: 12, Forsaljningspris: 22, TaMed: true, Notering: "c/c 0.35" },
   { Kategori: "Tak", Artikel: "Takplåt", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.25, Inkopspris: 120, Forsaljningspris: 195, TaMed: true, Notering: "" },
-  { Kategori: "Tak", Artikel: "Fotplåt", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.12, Inkopspris: 45, Forsaljningspris: 75, TaMed: true, Notering: "2 × taklängd" },
+  { Kategori: "Tak", Artikel: "Fotplåt", Enhet: "st", MangdPerM2: 1.9, Enhetstid: 0.12, Inkopspris: 45, Forsaljningspris: 75, TaMed: true, Notering: "Täcker 1.9m/st (sadeltak: 2 sidor, pulpet: 1 sida)" },
   { Kategori: "Tak", Artikel: "Vindskivor 22x145", Enhet: "lm", MangdPerM2: 2, Enhetstid: 0.40, Inkopspris: 55, Forsaljningspris: 95, TaMed: true, Notering: "2 brädor/takfall (sadeltak: 4×2=8, pulpet: 2×2=4)" },
   { Kategori: "Tak", Artikel: "Vindskiveplåt", Enhet: "st", MangdPerM2: 1.9, Enhetstid: 0.15, Inkopspris: 85, Forsaljningspris: 145, TaMed: true, Notering: "Täcker 1.9m/st (sadeltak: 4 takfall, pulpet: 2)" },
   { Kategori: "Tak", Artikel: "Takfotsbräda 22x145", Enhet: "lm", MangdPerM2: 0.0, Enhetstid: 0.15, Inkopspris: 25, Forsaljningspris: 45, TaMed: true, Notering: "2 × taklängd" },

@@ -177,7 +177,17 @@ export function calculateMaterialQuantities(
       
       if (mat.artikel === 'Takåsar') {
         mangd = antalTakasar * roofLenEff;
-      } else if (mat.artikel.includes('Fotplåt') || mat.artikel.includes('Takfotsbräda') || mat.artikel.includes('Regnvatten')) {
+      } else if (mat.artikel.includes('Fotplåt')) {
+        // Fotplåt/Takfotsplåt: MangdPerM2 = täckning per plåt (t.ex. 1.9m)
+        // Sadeltak: 2 långsidor, Pulpettak: 1 långsida
+        const antalLangsidor = inputs.roofType === 'sadeltak' ? 2 : 1;
+        if (mat.enhet === 'st' && mat.mangdPerM2 > 0) {
+          const totalLangd = antalLangsidor * roofLenEff;
+          mangd = Math.ceil(totalLangd / mat.mangdPerM2);  // Antal plåtar (st)
+        } else {
+          mangd = antalLangsidor * roofLenEff;  // Löpmeter
+        }
+      } else if (mat.artikel.includes('Takfotsbräda') || mat.artikel.includes('Regnvatten')) {
         mangd = 2 * roofLenEff;
       } else if (mat.artikel.includes('Vindskiveplåt')) {
         // Vindskiveplåt: MangdPerM2 = täckning per plåt (t.ex. 1.9m)
