@@ -180,13 +180,12 @@ export function calculateMaterialQuantities(
       } else if (mat.artikel.includes('Fotplåt') || mat.artikel.includes('Takfotsbräda') || mat.artikel.includes('Regnvatten')) {
         mangd = 2 * roofLenEff;
       } else if (mat.artikel.includes('Vindskiv')) {
-        // Vindskivor: om enhet är "st", beräkna antal brädor (MangdPerM2 = antal per kant)
-        if (mat.enhet === 'st' && mat.mangdPerM2 > 0) {
-          mangd = antalTakfallKanter * mat.mangdPerM2;  // t.ex. 4 kanter × 2 = 8 st
-        } else {
-          // Annars beräkna i löpmeter
-          mangd = antalTakfallKanter * roofSlope;
-        }
+        // Vindskivor: MangdPerM2 = antal brädor per sida (t.ex. 4)
+        // Sadeltak: 2 sidor × 4 brädor × takfall = 8 × takfall meter
+        // Pulpettak: 1 sida × 4 brädor × takfall = 4 × takfall meter
+        const antalSidor = inputs.roofType === 'sadeltak' ? 2 : 1;
+        const antalBradorPerSida = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 4;  // Default 4
+        mangd = antalSidor * antalBradorPerSida * roofSlope;  // Total längd i meter
       } else if (mat.artikel.includes('Nockplåt')) {
         mangd = roofLenEff;
       } else if (mat.mangdPerM2 > 0) {
