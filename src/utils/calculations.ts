@@ -71,11 +71,13 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
   let roofRun: number, roofSlope: number, roofArea: number;
 
   if (roofType === 'sadeltak') {
+    // Sadeltak: varje halva går från nock till kant + utsprång
     roofRun = B / 2.0 + overhang;
     roofSlope = roofRun / Math.cos(angle_rad);
     roofArea = 2 * roofLenEff * roofSlope;
   } else {
-    roofRun = B + overhang;
+    // Pulpettak: hela bredden + utsprång på BÅDA sidor (låg och hög kant)
+    roofRun = B + 2 * overhang;
     roofSlope = roofRun / Math.cos(angle_rad);
     roofArea = roofLenEff * roofSlope;
   }
