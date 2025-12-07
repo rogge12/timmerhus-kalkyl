@@ -63,6 +63,13 @@ export interface PrislistaMaterial {
   notering: string;
 }
 
+export interface EkonomiSettings {
+  prisTimmerIn: number;      // Inköpspris timmer kr/m
+  prisTimmerUt: number;      // Försäljningspris timmer kr/m
+  timkostnad: number;        // Timkostnad kr/h
+  momsPct: number;           // Moms %
+}
+
 // Material row for calculations (includes calculated quantity)
 export interface MaterialRow {
   id: string;

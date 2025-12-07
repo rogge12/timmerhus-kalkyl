@@ -22,11 +22,20 @@ export default function App() {
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [prislistaSource, setPrislistaSource] = useState<string>('Laddar...');
 
-  // Load default prislista on mount
+  // Load default prislista and ekonomi on mount
   useEffect(() => {
-    loadDefaultPrislista().then(data => {
-      setPrislista(data);
+    loadDefaultPrislista().then(({ materials, ekonomi }) => {
+      setPrislista(materials);
       setPrislistaSource('material_prislista.xlsx');
+      
+      // Uppdatera inputs med ekonomivärden från Excel
+      setInputs(prev => ({
+        ...prev,
+        prisTimmerIn: ekonomi.prisTimmerIn,
+        prisTimmerUt: ekonomi.prisTimmerUt,
+        timkostnad: ekonomi.timkostnad,
+        momsPct: ekonomi.momsPct,
+      }));
     });
   }, []);
 
@@ -59,9 +68,18 @@ export default function App() {
   // Handle file upload
   const handleFileUpload = async (file: File) => {
     try {
-      const data = await loadPrislistaFromFile(file);
-      setPrislista(data);
+      const { materials, ekonomi } = await loadPrislistaFromFile(file);
+      setPrislista(materials);
       setPrislistaSource(file.name);
+      
+      // Uppdatera inputs med ekonomivärden från Excel
+      setInputs(prev => ({
+        ...prev,
+        prisTimmerIn: ekonomi.prisTimmerIn,
+        prisTimmerUt: ekonomi.prisTimmerUt,
+        timkostnad: ekonomi.timkostnad,
+        momsPct: ekonomi.momsPct,
+      }));
     } catch (error) {
       console.error('Error loading file:', error);
       alert('Kunde inte läsa filen. Kontrollera att det är en giltig Excel-fil.');

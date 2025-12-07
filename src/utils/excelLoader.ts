@@ -1,7 +1,12 @@
 import * as XLSX from 'xlsx';
-import type { PrislistaMaterial } from '../types';
+import type { PrislistaMaterial, EkonomiSettings } from '../types';
 
-export async function loadPrislistaFromFile(file: File): Promise<PrislistaMaterial[]> {
+export interface ExcelData {
+  materials: PrislistaMaterial[];
+  ekonomi: EkonomiSettings;
+}
+
+export async function loadPrislistaFromFile(file: File): Promise<ExcelData> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -9,12 +14,16 @@ export async function loadPrislistaFromFile(file: File): Promise<PrislistaMateri
       try {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
-        const materials = parsePrislista(jsonData);
-        resolve(materials);
+        // Läs material från första fliken
+        const materialSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const materialData = XLSX.utils.sheet_to_json(materialSheet);
+        const materials = parsePrislista(materialData);
+        
+        // Läs ekonomi från "Ekonomi" fliken om den finns
+        const ekonomi = parseEkonomiSheet(workbook);
+        
+        resolve({ materials, ekonomi });
       } catch (error) {
         reject(error);
       }
@@ -25,20 +34,86 @@ export async function loadPrislistaFromFile(file: File): Promise<PrislistaMateri
   });
 }
 
-export async function loadDefaultPrislista(): Promise<PrislistaMaterial[]> {
+export async function loadDefaultPrislista(): Promise<ExcelData> {
   try {
     const response = await fetch('/material_prislista.xlsx');
     const arrayBuffer = await response.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
     
-    return parsePrislista(jsonData);
+    // Läs material från första fliken
+    const materialSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const materialData = XLSX.utils.sheet_to_json(materialSheet);
+    const materials = parsePrislista(materialData);
+    
+    // Läs ekonomi från "Ekonomi" fliken om den finns
+    const ekonomi = parseEkonomiSheet(workbook);
+    
+    return { materials, ekonomi };
   } catch (error) {
     console.error('Could not load default prislista:', error);
-    return getHardcodedDefaults();
+    return { 
+      materials: getHardcodedDefaults(),
+      ekonomi: getDefaultEkonomi()
+    };
   }
+}
+
+function parseEkonomiSheet(workbook: XLSX.WorkBook): EkonomiSettings {
+  // Försök hitta "Ekonomi" fliken (case-insensitive)
+  const ekonomiSheetName = workbook.SheetNames.find(
+    name => name.toLowerCase() === 'ekonomi'
+  );
+  
+  if (!ekonomiSheetName) {
+    console.log('Ingen "Ekonomi" flik hittades, använder standardvärden');
+    return getDefaultEkonomi();
+  }
+  
+  const sheet = workbook.Sheets[ekonomiSheetName];
+  const data = XLSX.utils.sheet_to_json(sheet);
+  
+  // Ekonomi-fliken kan vara i två format:
+  // 1. Nyckel-värde par i kolumn A och B
+  // 2. En rad med kolumnrubriker
+  
+  const ekonomi = getDefaultEkonomi();
+  
+  data.forEach((row: unknown) => {
+    const r = row as Record<string, unknown>;
+    
+    // Format 1: Nyckel i första kolumnen, värde i andra
+    const key = String(r['Parameter'] || r['Namn'] || r['Nyckel'] || '').toLowerCase();
+    const value = Number(r['Värde'] || r['Value'] || r['Varde'] || 0);
+    
+    if (key.includes('timmer') && key.includes('inköp') || key.includes('pristimmerin')) {
+      ekonomi.prisTimmerIn = value;
+    } else if (key.includes('timmer') && key.includes('försälj') || key.includes('pristimmerut')) {
+      ekonomi.prisTimmerUt = value;
+    } else if (key.includes('timkostnad') || key.includes('timkost')) {
+      ekonomi.timkostnad = value;
+    } else if (key.includes('moms')) {
+      ekonomi.momsPct = value;
+    }
+    
+    // Format 2: Direkt kolumnnamn
+    if (r['PrisTimmerIn'] !== undefined) ekonomi.prisTimmerIn = Number(r['PrisTimmerIn']);
+    if (r['PrisTimmerUt'] !== undefined) ekonomi.prisTimmerUt = Number(r['PrisTimmerUt']);
+    if (r['Timkostnad'] !== undefined) ekonomi.timkostnad = Number(r['Timkostnad']);
+    if (r['MomsPct'] !== undefined || r['Moms'] !== undefined) {
+      ekonomi.momsPct = Number(r['MomsPct'] || r['Moms']);
+    }
+  });
+  
+  return ekonomi;
+}
+
+function getDefaultEkonomi(): EkonomiSettings {
+  return {
+    prisTimmerIn: 60,
+    prisTimmerUt: 120,
+    timkostnad: 450,
+    momsPct: 25,
+  };
 }
 
 function parsePrislista(data: unknown[]): PrislistaMaterial[] {
