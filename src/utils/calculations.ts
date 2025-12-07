@@ -153,9 +153,9 @@ export function calculateMaterialQuantities(
     // Calculate quantity based on category and article
     if (mat.kategori === 'Golv') {
       // Floor materials are based on innerArea (m²)
-      if (mat.mangdPerM2 > 0) {
-        mangd = innerArea * mat.mangdPerM2;
-      }
+      // Om MangdPerM2 är 0 eller saknas, använd 1 (hela golvytan)
+      const faktor = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1;
+      mangd = innerArea * faktor;
     } else if (mat.kategori === 'Stomme') {
       // Stomme materials - check which ones use wall area vs syllomkrets
       if (mat.artikel === 'Timmer (tillverkning)' || 
