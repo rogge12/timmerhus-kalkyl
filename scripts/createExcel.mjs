@@ -7,6 +7,9 @@ const materialData = [
   { Kategori: "Golv", Artikel: "Golvreglar 45x145-220", Enhet: "lm", MangdPerM2: 1.67, Enhetstid: 0.20, Inkopspris: 45, Forsaljningspris: 85, TaMed: true, Notering: "Impregnerad" },
   { Kategori: "Golv", Artikel: "Stödregel 45x45", Enhet: "lm", MangdPerM2: 0.41, Enhetstid: 0.06, Inkopspris: 15, Forsaljningspris: 30, TaMed: true, Notering: "Impregnerad" },
   { Kategori: "Golv", Artikel: "Trallgolv 120mm", Enhet: "lm", MangdPerM2: 8.4, Enhetstid: 0.035, Inkopspris: 25, Forsaljningspris: 45, TaMed: true, Notering: "9.52 lm/m²" },
+  { Kategori: "Golv", Artikel: "Trossbottenskiva", Enhet: "st", MangdPerM2: 1.389, Enhetstid: 0.05, Inkopspris: 85, Forsaljningspris: 145, TaMed: true, Notering: "0.72 m²/skiva, avrundas uppåt" },
+  { Kategori: "Golv", Artikel: "Spånskivegolv", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.10, Inkopspris: 95, Forsaljningspris: 160, TaMed: true, Notering: "" },
+  { Kategori: "Golv", Artikel: "Isolering golv", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.08, Inkopspris: 75, Forsaljningspris: 125, TaMed: true, Notering: "" },
   
   { Kategori: "Stomme", Artikel: "Timmer (tillverkning)", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 1.50, Inkopspris: 60, Forsaljningspris: 120, TaMed: true, Notering: "Väggarea m² × pris/m" },
   { Kategori: "Stomme", Artikel: "Montering stomme", Enhet: "m2", MangdPerM2: 1.0, Enhetstid: 0.80, Inkopspris: 0, Forsaljningspris: 0, TaMed: true, Notering: "Endast arbetstid" },

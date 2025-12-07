@@ -156,6 +156,10 @@ export function calculateMaterialQuantities(
       // Om MangdPerM2 är 0 eller saknas, använd 1 (hela golvytan)
       const faktor = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1;
       mangd = innerArea * faktor;
+      // Avrunda uppåt för styck-material (st)
+      if (mat.enhet === 'st') {
+        mangd = Math.ceil(mangd);
+      }
     } else if (mat.kategori === 'Stomme') {
       // Stomme materials - check which ones use wall area vs syllomkrets
       if (mat.artikel === 'Timmer (tillverkning)' || 
