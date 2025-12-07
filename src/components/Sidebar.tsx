@@ -187,13 +187,13 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
         <Section title="Ekonomi">
           <div className="grid grid-cols-2 gap-3">
             <NumberField 
-              label="Timmer inköp (kr/m)" 
+              label="Timmer inköp (kr/m²)" 
               value={inputs.prisTimmerIn} 
               onChange={v => updateInput('prisTimmerIn', v)} 
               min={0} max={5000} step={5}
             />
             <NumberField 
-              label="Timmer utpris (kr/m)" 
+              label="Timmer utpris (kr/m²)" 
               value={inputs.prisTimmerUt} 
               onChange={v => updateInput('prisTimmerUt', v)} 
               min={0} max={5000} step={5}

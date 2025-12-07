@@ -32,8 +32,8 @@ const materialData = [
 
 // Ekonomi data
 const ekonomiData = [
-  { Parameter: "PrisTimmerIn", Värde: 60, Beskrivning: "Inköpspris timmer (kr/m)" },
-  { Parameter: "PrisTimmerUt", Värde: 120, Beskrivning: "Försäljningspris timmer (kr/m)" },
+  { Parameter: "PrisTimmerIn", Värde: 60, Beskrivning: "Inköpspris timmer (kr/m²)" },
+  { Parameter: "PrisTimmerUt", Värde: 120, Beskrivning: "Försäljningspris timmer (kr/m²)" },
   { Parameter: "Timkostnad", Värde: 450, Beskrivning: "Timkostnad (kr/h)" },
   { Parameter: "MomsPct", Värde: 25, Beskrivning: "Moms (%)" },
 ];
