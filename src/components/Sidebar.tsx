@@ -4,9 +4,13 @@ import type { BuildingInputs } from '../types';
 interface SidebarProps {
   inputs: BuildingInputs;
   setInputs: React.Dispatch<React.SetStateAction<BuildingInputs>>;
+  isCollapsed: boolean;
+  setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  projektNamn: string;
+  setProjektNamn: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export function Sidebar({ inputs, setInputs }: SidebarProps) {
+export function Sidebar({ inputs, setInputs, isCollapsed, setIsCollapsed, projektNamn, setProjektNamn }: SidebarProps) {
   const updateInput = <K extends keyof BuildingInputs>(
     key: K, 
     value: BuildingInputs[K]
@@ -14,14 +18,57 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
     setInputs(prev => ({ ...prev, [key]: value }));
   };
 
+  // Collapsed state - show only toggle button
+  if (isCollapsed) {
+    return (
+      <aside className="fixed left-0 top-0 h-screen w-12 bg-white border-r border-slate-200 shadow-sm flex flex-col items-center pt-4">
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+          title="Visa inställningar"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        <span className="mt-4 text-xs text-slate-400 writing-mode-vertical" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+          Inställningar
+        </span>
+      </aside>
+    );
+  }
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-80 bg-white border-r border-slate-200 overflow-y-auto shadow-sm">
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="pb-4 border-b border-slate-200">
+        <div className="pb-4 border-b border-slate-200 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-slate-800">
-            🪵 Inställningar
+            ⚙️ Inställningar
           </h2>
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+            title="Dölj inställningar"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Projektnamn */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-700">📋 Projektnamn</label>
+          <input
+            type="text"
+            value={projektNamn}
+            onChange={e => setProjektNamn(e.target.value)}
+            placeholder="T.ex. Sjöbod Andersson"
+            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-sm 
+                       focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+                       transition-all duration-200 placeholder:text-slate-400"
+          />
         </div>
 
         {/* Roof Type */}
@@ -66,6 +113,29 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
             </span>
           </label>
 
+          {/* Grundtyp */}
+          <div className="mt-4 space-y-2">
+            <label className="text-sm text-slate-500">Typ av grund</label>
+            <div className="flex gap-2">
+              {(['plintar', 'betongsten', 'ingen'] as const).map(typ => (
+                <button
+                  key={typ}
+                  onClick={() => updateInput('grundTyp', typ)}
+                  className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    inputs.grundTyp === typ
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {typ === 'plintar' ? 'Plintar' : typ === 'betongsten' ? 'Betongsten' : 'Ingen'}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">
+              {inputs.grundTyp === 'ingen' ? 'Ingen grund räknas med' : 'Lägger till 20cm höjd'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 mt-4">
             <NumberField 
               label="Längd (m)" 
@@ -80,19 +150,19 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
               min={1} max={50} step={0.1}
             />
             <NumberField 
-              label="Väggliv (m)" 
+              label="Höjd väggliv (m)" 
               value={inputs.wallHeight} 
               onChange={v => updateInput('wallHeight', v)} 
               min={0.1} max={10} step={0.01}
             />
             <NumberField 
-              label="Taklut (°)" 
+              label="Taklutning (°)" 
               value={inputs.roofAngle} 
               onChange={v => updateInput('roofAngle', v)} 
               min={5} max={60} step={1}
             />
             <NumberField 
-              label="Utsprång (m)" 
+              label="Takutsprång (m)" 
               value={inputs.overhang} 
               onChange={v => updateInput('overhang', v)} 
               min={0} max={2} step={0.05}
@@ -104,7 +174,7 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
               min={1} max={50} step={1}
             />
             <NumberField 
-              label="Knututstick (m)" 
+              label="Knutlängd (m)" 
               value={inputs.knut} 
               onChange={v => updateInput('knut', v)} 
               min={0} max={1} step={0.01}
@@ -172,13 +242,13 @@ export function Sidebar({ inputs, setInputs }: SidebarProps) {
               label="Ströläkt (m)" 
               value={inputs.ccStro} 
               onChange={v => updateInput('ccStro', v)} 
-              min={0.1} max={1} step={0.05}
+              min={0.1} max={1} step={0.1}
             />
             <NumberField 
               label="Bärläkt (m)" 
               value={inputs.ccBar} 
               onChange={v => updateInput('ccBar', v)} 
-              min={0.1} max={1} step={0.05}
+              min={0.1} max={1} step={0.1}
             />
           </div>
         </Section>

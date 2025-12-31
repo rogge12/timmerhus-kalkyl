@@ -1,6 +1,7 @@
 export interface BuildingInputs {
   roofType: 'sadeltak' | 'pulpettak';
   includeMellanvagg: boolean;
+  grundTyp: 'plintar' | 'betongsten' | 'ingen';  // Typ av grund
   length: number;
   width: number;
   wallHeight: number;
@@ -35,10 +36,12 @@ export interface CalculatedValues {
   innerVaggArea: number;  // Invändig väggarea (för innerpanel etc)
   innertakArea: number;   // Innertak area (sned eller platt)
   roofArea: number;
+  outerArea: number;      // Ytterarea (L × B)
   innerArea: number;
   innerL: number;
   innerB: number;
   gabelHeight: number;
+  grundHeight: number;    // Höjd på grund (0.2m för plintar/betongsten, 0 för ingen)
   totalHeight: number;
   golvasLen: number;
   stroLaktLen: number;
@@ -48,6 +51,7 @@ export interface CalculatedValues {
   meterPerVarv: number;  // Meter timmer per stockvarv (inkl knututstick)
   syllOmkrets: number;   // Omkrets för syllvirke (utan knututstick)
   innerOmkrets: number;  // Invändig omkrets
+  antalGrundElement: number;  // Antal plintar eller betongstenspar
 }
 
 // Material from Excel file
@@ -58,7 +62,8 @@ export interface PrislistaMaterial {
   mangdPerM2: number;
   enhetstid: number;
   inkopspris: number;
-  forsaljningspris: number;
+  spillPct: number;      // Spill i procent (t.ex. 10 = 10%)
+  paslagPct: number;     // Påslag i procent (t.ex. 30 = 30%)
   taMed: boolean;
   notering: string;
 }
@@ -79,7 +84,8 @@ export interface MaterialRow {
   mangdPerM2: number;
   mangd: number;
   inkopspris: number;
-  forsaljningspris: number;
+  spillPct: number;      // Spill i procent (t.ex. 10 = 10%)
+  paslagPct: number;     // Påslag i procent (t.ex. 30 = 30%)
   enhetstid: number;
   taMed: boolean;
   notering: string;
@@ -97,6 +103,7 @@ export interface TimeRow {
 export const defaultInputs: BuildingInputs = {
   roofType: 'sadeltak',
   includeMellanvagg: false,
+  grundTyp: 'plintar',  // Standard: plintar
   length: 5.0,
   width: 3.0,
   wallHeight: 2.12,
@@ -109,9 +116,9 @@ export const defaultInputs: BuildingInputs = {
   ccStro: 0.6,
   ccBar: 0.35,
   antalTakasar: 3,
-  prisTimmerIn: 60,
-  prisTimmerUt: 120,
-  timkostnad: 450,
+  prisTimmerIn: 458,
+  prisTimmerUt: 850,
+  timkostnad: 550,
   momsPct: 25,
   avdragVaggarea: 0,  // Avdrag för fönster/dörrar
   innertakTyp: 'sned',  // Snedtak som standard

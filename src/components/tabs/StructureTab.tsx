@@ -1,216 +1,174 @@
 import type { BuildingInputs, CalculatedValues } from '../../types';
-import { formatNumber } from '../../utils/calculations';
+import { formatNumber, formatTime } from '../../utils/calculations';
 
 interface Props {
   inputs: BuildingInputs;
   calculated: CalculatedValues;
 }
 
+// Uppskattad tillverkningstid per m² väggyta (i timmar)
+const TILLVERKNINGSTID_PER_M2 = 27 / 60; // 27 minuter = 0.45 timmar
+
 export function StructureTab({ inputs, calculated }: Props) {
-  const { roofType, includeMellanvagg, wallHeight, avdragVaggarea, innertakTyp } = inputs;
+  const { roofType, includeMellanvagg, grundTyp, wallHeight, avdragVaggarea, innertakTyp } = inputs;
   const { 
-    varvSnitt, totalLogg, totalLoggNetto, roofArea, innerArea, 
-    gabelHeight, totalHeight, vaggAreaTotal, vaggAreaNetto,
+    varvSnitt, totalLogg, totalLoggNetto, roofArea, outerArea, innerArea, 
+    gabelHeight, grundHeight, totalHeight, vaggAreaTotal, vaggAreaNetto,
     innerVaggArea, innertakArea, innerOmkrets,
     timmerYtter, timmerGavlar, timmerMellan,
     roofLenEff, roofSlope, innerL, innerB,
-    antalVarvLow, antalVarvHigh, meterPerVarv, syllOmkrets
+    antalVarvLow, antalVarvHigh, meterPerVarv, syllOmkrets, antalGrundElement
   } = calculated;
 
-  return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Header info badges */}
-      <div className="flex flex-wrap gap-3">
-        <Badge icon="🏠" label="Stomtyp" value={roofType === 'sadeltak' ? 'Sadeltak' : 'Pulpettak'} />
-        <Badge icon="🧱" label="Mellanvägg" value={includeMellanvagg ? 'Ja' : 'Nej'} />
-      </div>
-
-      {/* Key metrics grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <MetricCard 
-          label="Antal stockvarv (snitt)" 
-          value={formatNumber(varvSnitt, 1)} 
-          icon="📊"
-        />
-        <MetricCard 
-          label={avdragVaggarea > 0 ? "Timmerlängd netto" : "Total timmerlängd"} 
-          value={`${formatNumber(avdragVaggarea > 0 ? totalLoggNetto : totalLogg, 1)} m`} 
-          icon="📏"
-        />
-        <MetricCard 
-          label={avdragVaggarea > 0 ? "Väggyta netto" : "Väggyta totalt"} 
-          value={`${formatNumber(avdragVaggarea > 0 ? vaggAreaNetto : vaggAreaTotal, 1)} m²`} 
-          icon="🧱"
-        />
-        <MetricCard 
-          label="Takarea (yttre)" 
-          value={`${formatNumber(roofArea, 1)} m²`} 
-          icon="🏠"
-        />
-        <MetricCard 
-          label="Golvarea" 
-          value={`${formatNumber(innerArea, 1)} m²`} 
-          icon="⬛"
-        />
-        <MetricCard 
-          label="Innertakyta" 
-          value={`${formatNumber(innertakArea, 1)} m²`} 
-          icon="🔲"
-        />
-      </div>
-
-      {/* Height metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          label="Väggliv (låg sida)" 
-          value={`${formatNumber(wallHeight, 2)} m`}
-          small
-        />
-        <MetricCard 
-          label="Extra höjd (gavel/pulpet)" 
-          value={`${formatNumber(gabelHeight, 2)} m`}
-          small
-        />
-        <MetricCard 
-          label="Total bygghöjd" 
-          value={`${formatNumber(totalHeight, 2)} m`}
-          small
-        />
-        <HeightStatus height={totalHeight} />
-      </div>
-
-      {/* Pulpet extra info */}
-      {roofType === 'pulpettak' && (
-        <div className="flex gap-4 text-sm text-slate-500">
-          <span>Antal varv låg sida: <strong className="text-slate-700">{antalVarvLow}</strong></span>
-          <span>•</span>
-          <span>Antal varv hög sida: <strong className="text-slate-700">{antalVarvHigh}</strong></span>
-        </div>
-      )}
-
-      {/* Detail sections */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <DetailCard title="🪵 Väggar & timmer">
-          <DetailList items={[
-            { label: 'Meter per varv', value: `${formatNumber(meterPerVarv, 2)} m` },
-            { label: 'Syllomkrets', value: `${formatNumber(syllOmkrets, 2)} m` },
-            { label: 'Ytterväggar', value: `${formatNumber(timmerYtter, 1)} m` },
-            { label: 'Gavlar', value: `${formatNumber(timmerGavlar, 1)} m` },
-            { label: 'Mellanvägg', value: `${formatNumber(timmerMellan, 1)} m` },
-            { label: 'Timmerlängd (brutto)', value: `${formatNumber(totalLogg, 1)} m`, highlight: true },
-            { label: 'Väggyta (brutto)', value: `${formatNumber(vaggAreaTotal, 2)} m²`, highlight: true },
-            ...(avdragVaggarea > 0 ? [
-              { label: `Avdrag (fönster/dörrar)`, value: `-${formatNumber(avdragVaggarea, 2)} m²` },
-              { label: 'Timmerlängd netto', value: `${formatNumber(totalLoggNetto, 1)} m`, highlight: true },
-              { label: 'Väggyta netto', value: `${formatNumber(vaggAreaNetto, 2)} m²`, highlight: true },
-            ] : []),
-            { label: 'Invändig omkrets', value: `${formatNumber(innerOmkrets, 2)} m` },
-            { label: 'Invändig väggyta', value: `${formatNumber(innerVaggArea, 2)} m²`, highlight: true },
-          ]} />
-        </DetailCard>
-
-        <DetailCard title="🏠 Tak & golv">
-          <div className="grid grid-cols-2 gap-x-6">
-            <DetailList items={[
-              { label: 'Effektiv taklängd', value: `${formatNumber(roofLenEff, 2)} m` },
-              { label: 'Sned taklängd', value: `${formatNumber(roofSlope, 2)} m` },
-              { label: 'Takarea (yttre)', value: `${formatNumber(roofArea, 1)} m²` },
-            ]} />
-            <DetailList items={[
-              { label: 'Invändig längd', value: `${formatNumber(innerL, 2)} m` },
-              { label: 'Invändig bredd', value: `${formatNumber(innerB, 2)} m` },
-              { label: 'Golvyta', value: `${formatNumber(innerArea, 2)} m²` },
-            ]} />
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <DetailList items={[
-              { 
-                label: `Innertak (${innertakTyp === 'sned' ? 'snedtak' : 'platt'})`, 
-                value: `${formatNumber(innertakArea, 2)} m²`, 
-                highlight: true 
-              },
-            ]} />
-            <p className="text-xs text-slate-400 mt-1">
-              {innertakTyp === 'sned' 
-                ? 'Följer taklutningen invändigt' 
-                : 'Horisontellt tak (samma som golvyta)'}
-            </p>
-          </div>
-        </DetailCard>
-      </div>
-    </div>
-  );
-}
-
-function Badge({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
-      <span>{icon}</span>
-      <span className="text-sm text-slate-500">{label}:</span>
-      <span className="text-sm font-medium text-slate-700">{value}</span>
-    </div>
-  );
-}
-
-function MetricCard({ 
-  label, value, icon, small = false 
-}: { 
-  label: string; 
-  value: string; 
-  icon?: string;
-  small?: boolean;
-}) {
-  return (
-    <div className="group relative bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="relative">
-        {icon && <span className="text-2xl mb-2 block">{icon}</span>}
-        <p className="text-xs text-slate-500 mb-1">{label}</p>
-        <p className={`font-semibold text-slate-800 ${small ? 'text-lg' : 'text-2xl'}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function HeightStatus({ height }: { height: number }) {
-  const isOver = height > 3.0;
+  const isOverHeight = totalHeight > 3.0;
   
+  // Beräkna uppskattad tillverkningstid för timmer
+  const tillverkningsTid = (avdragVaggarea > 0 ? vaggAreaNetto : vaggAreaTotal) * TILLVERKNINGSTID_PER_M2;
+
   return (
-    <div className={`relative rounded-xl p-5 border transition-all duration-300 ${
-      isOver 
-        ? 'bg-red-50 border-red-200' 
-        : 'bg-green-50 border-green-200'
-    }`}>
-      <p className="text-xs text-slate-500 mb-1">Bygglovsgräns</p>
-      <p className={`text-lg font-bold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
-        {isOver ? '⚠️ ÖVER 3,0 m' : '✓ UNDER 3,0 m'}
-      </p>
-      {isOver && (
-        <p className="text-xs text-red-500 mt-1">Kan kräva bygglov</p>
-      )}
+    <div className="space-y-4 animate-fadeIn">
+      {/* Top row: badges + height status */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
+          <Badge label="Stomtyp" value={roofType === 'sadeltak' ? 'Sadeltak' : 'Pulpettak'} />
+          <Badge label="Mellanvägg" value={includeMellanvagg ? 'Ja' : 'Nej'} />
+          <Badge label="Grund" value={grundTyp === 'plintar' ? `Plintar (${antalGrundElement} st)` : grundTyp === 'betongsten' ? `Betongsten (${antalGrundElement} st)` : 'Ingen'} />
+          {roofType === 'pulpettak' && (
+            <Badge label="Varv" value={`${antalVarvLow} / ${antalVarvHigh}`} />
+          )}
+          {roofType === 'sadeltak' && (
+            <Badge label="Varv (snitt)" value={formatNumber(varvSnitt, 1)} />
+          )}
+        </div>
+        <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+          isOverHeight 
+            ? 'bg-red-100 text-red-700 border border-red-200' 
+            : 'bg-green-100 text-green-700 border border-green-200'
+        }`}>
+          {isOverHeight ? '⚠️ Höjd > 3,0 m' : '✓ Höjd < 3,0 m'}
+        </div>
+      </div>
+
+      {/* Main metrics - compact grid */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+          <Metric label="Ytterarea" value={formatNumber(outerArea, 1)} unit="m²" />
+          <Metric label="Timmerlängd" value={formatNumber(avdragVaggarea > 0 ? totalLoggNetto : totalLogg, 1)} unit="m" />
+          <Metric label="Väggyta" value={formatNumber(avdragVaggarea > 0 ? vaggAreaNetto : vaggAreaTotal, 1)} unit="m²" />
+          <Metric label="Takarea" value={formatNumber(roofArea, 1)} unit="m²" />
+          <Metric label="Golvarea" value={formatNumber(innerArea, 1)} unit="m²" />
+          <Metric label="Innertakyta" value={formatNumber(innertakArea, 1)} unit="m²" />
+          <Metric label="Total höjd" value={formatNumber(totalHeight, 2)} unit="m" highlight={isOverHeight} />
+        </div>
+      </div>
+
+      {/* Detail tables side by side */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Väggar & timmer */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
+            <h3 className="font-semibold text-slate-700 text-sm">🏗️ Väggar & timmer</h3>
+          </div>
+          <div className="p-3">
+            <table className="w-full text-sm">
+              <tbody>
+                <Row label="Meter/varv" value={`${formatNumber(meterPerVarv, 2)} m`} />
+                <Row label="Syllomkrets" value={`${formatNumber(syllOmkrets, 2)} m`} />
+                <Row label="Ytterväggar" value={`${formatNumber(timmerYtter, 1)} m`} />
+                <Row label="Gavlar" value={`${formatNumber(timmerGavlar, 1)} m`} />
+                {includeMellanvagg && <Row label="Mellanvägg" value={`${formatNumber(timmerMellan, 1)} m`} />}
+                <Row label="Timmer brutto" value={`${formatNumber(totalLogg, 1)} m`} highlight />
+                {avdragVaggarea > 0 && (
+                  <>
+                    <Row label="Avdrag (fönster/dörr)" value={`-${formatNumber(avdragVaggarea, 1)} m²`} />
+                    <Row label="Timmer netto" value={`${formatNumber(totalLoggNetto, 1)} m`} highlight />
+                  </>
+                )}
+                <Row label="Inv. väggyta" value={`${formatNumber(innerVaggArea, 1)} m²`} />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Tak & golv */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
+            <h3 className="font-semibold text-slate-700 text-sm">🏠 Tak & golv</h3>
+          </div>
+          <div className="p-3">
+            <table className="w-full text-sm">
+              <tbody>
+                <Row label="Taklängd (eff)" value={`${formatNumber(roofLenEff, 2)} m`} />
+                <Row label="Takfall" value={`${formatNumber(roofSlope, 2)} m`} />
+                <Row label="Takarea" value={`${formatNumber(roofArea, 1)} m²`} highlight />
+                <Row label="Inv. längd" value={`${formatNumber(innerL, 2)} m`} />
+                <Row label="Inv. bredd" value={`${formatNumber(innerB, 2)} m`} />
+                <Row label="Golvyta" value={`${formatNumber(innerArea, 1)} m²`} highlight />
+                <Row label={`Innertak (${innertakTyp === 'sned' ? 'sned' : 'platt'})`} value={`${formatNumber(innertakArea, 1)} m²`} />
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Höjder - compact */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <span className="text-slate-500">Höjder:</span>
+          {grundHeight > 0 && (
+            <span><span className="text-slate-500">Grund:</span> <strong className="text-slate-700">{formatNumber(grundHeight * 100, 0)} cm</strong></span>
+          )}
+          <span><span className="text-slate-500">Väggliv:</span> <strong className="text-slate-700">{formatNumber(wallHeight, 2)} m</strong></span>
+          <span><span className="text-slate-500">Gavel/pulpet:</span> <strong className="text-slate-700">{formatNumber(gabelHeight, 2)} m</strong></span>
+          <span><span className="text-slate-500">Total:</span> <strong className={isOverHeight ? 'text-red-600' : 'text-slate-700'}>{formatNumber(totalHeight, 2)} m</strong></span>
+          <span><span className="text-slate-500">Inv. omkrets:</span> <strong className="text-slate-700">{formatNumber(innerOmkrets, 2)} m</strong></span>
+        </div>
+      </div>
+
+      {/* Uppskattad tillverkningstid */}
+      <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⏱️</span>
+            <div>
+              <p className="text-sm font-medium text-amber-800">Uppskattad tillverkningstid (timmer)</p>
+              <p className="text-xs text-amber-600">
+                {formatNumber(avdragVaggarea > 0 ? vaggAreaNetto : vaggAreaTotal, 1)} m² × 27 min/m²
+              </p>
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-amber-700">{formatTime(tillverkningsTid)}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function DetailCard({ title, children }: { title: string; children: React.ReactNode }) {
+function Badge({ label, value }: { label: string; value: string }) {
   return (
-    <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-      <h3 className="font-display font-semibold text-xl text-slate-800 mb-4">{title}</h3>
-      {children}
-    </section>
+    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full text-sm">
+      <span className="text-slate-500">{label}:</span>
+      <span className="font-medium text-slate-700">{value}</span>
+    </div>
   );
 }
 
-function DetailList({ items }: { items: { label: string; value: string; highlight?: boolean }[] }) {
+function Metric({ label, value, unit, highlight = false }: { label: string; value: string; unit: string; highlight?: boolean }) {
   return (
-    <ul className="space-y-2">
-      {items.map((item, i) => (
-        <li key={i} className={`flex justify-between ${item.highlight ? 'pt-2 border-t border-slate-200' : ''}`}>
-          <span className="text-slate-500">{item.label}</span>
-          <span className={`font-medium ${item.highlight ? 'text-slate-800' : 'text-slate-600'}`}>
-            {item.value}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="text-center">
+      <p className="text-xs text-slate-500 mb-0.5">{label}</p>
+      <p className={`text-lg font-bold ${highlight ? 'text-red-600' : 'text-slate-800'}`}>
+        {value} <span className="text-sm font-normal text-slate-500">{unit}</span>
+      </p>
+    </div>
+  );
+}
+
+function Row({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <tr className={highlight ? 'bg-slate-50' : ''}>
+      <td className="py-1 text-slate-500">{label}</td>
+      <td className={`py-1 text-right font-medium ${highlight ? 'text-slate-800' : 'text-slate-600'}`}>{value}</td>
+    </tr>
   );
 }

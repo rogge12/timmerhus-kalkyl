@@ -1,10 +1,24 @@
 import React, { useMemo } from 'react';
 import type { MaterialRow } from '../../types';
-import { formatNumber, formatCurrency } from '../../utils/calculations';
+import { formatNumber, formatCurrency, formatTime } from '../../utils/calculations';
 
 interface Props {
   materials: MaterialRow[];
   setMaterials: React.Dispatch<React.SetStateAction<MaterialRow[]>>;
+}
+
+// Beräkna totalpris för en materialrad
+function calculateTotalPrice(row: MaterialRow): number {
+  const mangdMedSpill = row.mangd * (1 + row.spillPct / 100);
+  const inkopMedSpill = mangdMedSpill * row.inkopspris;
+  const totalPris = inkopMedSpill * (1 + row.paslagPct / 100);
+  return totalPris;
+}
+
+// Beräkna inköpstotal (inkl spill)
+function calculateInkopTotal(row: MaterialRow): number {
+  const mangdMedSpill = row.mangd * (1 + row.spillPct / 100);
+  return mangdMedSpill * row.inkopspris;
 }
 
 export function MaterialTab({ materials, setMaterials }: Props) {
@@ -16,8 +30,8 @@ export function MaterialTab({ materials, setMaterials }: Props) {
 
   const totals = useMemo(() => {
     const selected = materials.filter(m => m.taMed);
-    const inkopTotal = selected.reduce((sum, m) => sum + m.mangd * m.inkopspris, 0);
-    const forsaljningTotal = selected.reduce((sum, m) => sum + m.mangd * m.forsaljningspris, 0);
+    const inkopTotal = selected.reduce((sum, m) => sum + calculateInkopTotal(m), 0);
+    const forsaljningTotal = selected.reduce((sum, m) => sum + calculateTotalPrice(m), 0);
     const totalTid = selected.reduce((sum, m) => sum + m.mangd * m.enhetstid, 0);
     return { inkopTotal, forsaljningTotal, totalTid };
   }, [materials]);
@@ -44,11 +58,11 @@ export function MaterialTab({ materials, setMaterials }: Props) {
   }, [materials]);
 
   const categoryIcons: Record<string, string> = {
-    'Stomme': '🪵',
-    'Golv': '⬛',
+    'Stomme': '🏗️',
+    'Golv': '📐',
     'Tak': '🏠',
     'Vägg': '🧱',
-    'Grund': '🪨',
+    'Grund': '🧱',
   };
 
   return (
@@ -56,8 +70,7 @@ export function MaterialTab({ materials, setMaterials }: Props) {
       <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
         <p className="text-slate-600 text-sm">
           Mängder beräknas automatiskt från byggmått. Priser och enhetstider laddas från Excel-filen.
-          Du kan justera <strong className="text-slate-800">Mängd</strong>, <strong className="text-slate-800">Priser</strong> och 
-          <strong className="text-slate-800"> Enhetstid</strong> manuellt.
+          <strong className="text-slate-800"> Totalpris</strong> = Mängd × (1 + Spill%) × Inköp × (1 + Påslag%)
         </p>
       </div>
 
@@ -70,20 +83,21 @@ export function MaterialTab({ materials, setMaterials }: Props) {
                 <th className="text-left p-3 font-medium text-slate-600 w-12">✓</th>
                 <th className="text-left p-3 font-medium text-slate-600">Artikel</th>
                 <th className="text-left p-3 font-medium text-slate-600 w-16">Enhet</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-24">Mängd</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-24">Inköp/e</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-24">Förs/e</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-20">h/e</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-20">Mängd</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-20">Inköp/e</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-16">Spill%</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-16">Påslag%</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-20">Enhetstid</th>
                 <th className="text-right p-3 font-medium text-slate-600 w-24">Inköp tot</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-24">Förs tot</th>
-                <th className="text-right p-3 font-medium text-slate-600 w-20">Tid (h)</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-24">Totalpris</th>
+                <th className="text-right p-3 font-medium text-slate-600 w-24">Tid</th>
               </tr>
             </thead>
             <tbody>
               {grouped.map(([kategori, rows]) => (
                 <React.Fragment key={kategori}>
                   <tr className="bg-slate-100">
-                    <td colSpan={10} className="p-2 font-semibold text-slate-700">
+                    <td colSpan={11} className="p-2 font-semibold text-slate-700">
                       {categoryIcons[kategori] || '📦'} {kategori}
                     </td>
                   </tr>
@@ -99,17 +113,17 @@ export function MaterialTab({ materials, setMaterials }: Props) {
             </tbody>
             <tfoot>
               <tr className="bg-slate-50 border-t border-slate-300">
-                <td colSpan={7} className="p-3 text-right font-semibold text-slate-700">
+                <td colSpan={8} className="p-3 text-right font-semibold text-slate-700">
                   Summa (valda):
                 </td>
                 <td className="p-3 text-right font-bold text-slate-600">
                   {formatCurrency(totals.inkopTotal)}
                 </td>
-                <td className="p-3 text-right font-bold text-slate-800">
+                <td className="p-3 text-right font-bold text-green-600">
                   {formatCurrency(totals.forsaljningTotal)}
                 </td>
                 <td className="p-3 text-right font-bold text-slate-700">
-                  {formatNumber(totals.totalTid, 1)} h
+                  {formatTime(totals.totalTid)}
                 </td>
               </tr>
             </tfoot>
@@ -120,18 +134,18 @@ export function MaterialTab({ materials, setMaterials }: Props) {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
         <SummaryCard 
-          label="Materialkostnad inköp" 
+          label="Materialkostnad inköp (inkl spill)" 
           value={formatCurrency(totals.inkopTotal)}
           variant="secondary"
         />
         <SummaryCard 
-          label="Material försäljning" 
+          label="Material totalpris (inkl påslag)" 
           value={formatCurrency(totals.forsaljningTotal)}
           variant="primary"
         />
         <SummaryCard 
           label="Total arbetstid material" 
-          value={`${formatNumber(totals.totalTid, 1)} h`}
+          value={formatTime(totals.totalTid)}
           variant="secondary"
         />
       </div>
@@ -146,8 +160,8 @@ function MaterialRowComponent({
   row: MaterialRow; 
   onUpdate: (id: string, field: keyof MaterialRow, value: number | boolean) => void;
 }) {
-  const inkopTot = row.mangd * row.inkopspris;
-  const forsaljTot = row.mangd * row.forsaljningspris;
+  const inkopTot = calculateInkopTotal(row);
+  const totalPris = calculateTotalPrice(row);
   const tidTot = row.mangd * row.enhetstid;
 
   return (
@@ -183,7 +197,7 @@ function MaterialRowComponent({
           onChange={e => onUpdate(row.id, 'mangd', parseFloat(e.target.value) || 0)}
           step="0.1"
           min="0"
-          className="w-20 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-16 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </td>
       <td className="p-2">
@@ -193,17 +207,29 @@ function MaterialRowComponent({
           onChange={e => onUpdate(row.id, 'inkopspris', parseFloat(e.target.value) || 0)}
           step="1"
           min="0"
-          className="w-20 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-16 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </td>
       <td className="p-2">
         <input
           type="number"
-          value={row.forsaljningspris}
-          onChange={e => onUpdate(row.id, 'forsaljningspris', parseFloat(e.target.value) || 0)}
+          value={row.spillPct}
+          onChange={e => onUpdate(row.id, 'spillPct', parseFloat(e.target.value) || 0)}
           step="1"
           min="0"
-          className="w-20 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+          max="100"
+          className="w-14 px-2 py-1 text-right bg-amber-50 border border-amber-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+        />
+      </td>
+      <td className="p-2">
+        <input
+          type="number"
+          value={row.paslagPct}
+          onChange={e => onUpdate(row.id, 'paslagPct', parseFloat(e.target.value) || 0)}
+          step="1"
+          min="0"
+          max="200"
+          className="w-14 px-2 py-1 text-right bg-green-50 border border-green-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </td>
       <td className="p-2">
@@ -213,17 +239,17 @@ function MaterialRowComponent({
           onChange={e => onUpdate(row.id, 'enhetstid', parseFloat(e.target.value) || 0)}
           step="0.01"
           min="0"
-          className="w-16 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-20 px-2 py-1 text-right bg-slate-50 border border-slate-200 rounded text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </td>
       <td className="p-2 text-right text-slate-500">
         {formatNumber(inkopTot, 0)}
       </td>
-      <td className="p-2 text-right text-slate-700 font-medium">
-        {formatNumber(forsaljTot, 0)}
+      <td className="p-2 text-right text-green-600 font-medium">
+        {formatNumber(totalPris, 0)}
       </td>
-      <td className="p-2 text-right text-slate-600">
-        {formatNumber(tidTot, 2)}
+      <td className="p-2 text-right text-slate-600 text-xs">
+        {formatTime(tidTot)}
       </td>
     </tr>
   );

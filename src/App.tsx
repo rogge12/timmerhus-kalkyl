@@ -10,8 +10,8 @@ import type { BuildingInputs, MaterialRow, PrislistaMaterial } from './types';
 import { defaultInputs } from './types';
 
 const tabs = [
-  { label: '🏠 Stomme & bygghöjd', icon: '🏠' },
-  { label: '📦 Material', icon: '📦' },
+  { label: '🏗️ Stomme & bygghöjd', icon: '🏗️' },
+  { label: '📐 Material', icon: '📐' },
   { label: '⏱ Tid & offert', icon: '⏱' },
 ];
 
@@ -21,6 +21,8 @@ export default function App() {
   const [prislista, setPrislista] = useState<PrislistaMaterial[]>([]);
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [prislistaSource, setPrislistaSource] = useState<string>('Laddar...');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [projektNamn, setProjektNamn] = useState<string>('');
 
   // Load default prislista and ekonomi on mount
   useEffect(() => {
@@ -50,10 +52,13 @@ export default function App() {
         return newMaterials.map(newMat => {
           const existing = prev.find(p => p.artikel === newMat.artikel);
           if (existing) {
+            // "Timmer (tillverkning)" får alltid sina priser/påslag från ekonomi-inställningarna
+            const isTimmer = newMat.artikel === 'Timmer (tillverkning)';
             return {
               ...newMat,
-              inkopspris: existing.inkopspris,
-              forsaljningspris: existing.forsaljningspris,
+              inkopspris: isTimmer ? newMat.inkopspris : existing.inkopspris,
+              spillPct: isTimmer ? newMat.spillPct : existing.spillPct,
+              paslagPct: isTimmer ? newMat.paslagPct : existing.paslagPct,
               enhetstid: existing.enhetstid,
               taMed: existing.taMed,
               mangd: newMat.mangd,
@@ -89,14 +94,21 @@ export default function App() {
   return (
     <div className="min-h-screen flex bg-slate-50">
       {/* Sidebar */}
-      <Sidebar inputs={inputs} setInputs={setInputs} />
+      <Sidebar 
+        inputs={inputs} 
+        setInputs={setInputs} 
+        isCollapsed={sidebarCollapsed}
+        setIsCollapsed={setSidebarCollapsed}
+        projektNamn={projektNamn}
+        setProjektNamn={setProjektNamn}
+      />
 
       {/* Main content */}
-      <main className="flex-1 ml-80 p-8 relative">
+      <main className={`flex-1 p-8 relative transition-all duration-300 ${sidebarCollapsed ? 'ml-12' : 'ml-80'}`}>
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-4xl">🪵</span>
+            <span className="text-4xl">🏗️</span>
             <h1 className="font-display text-4xl font-bold text-slate-800">
               Timmerhus-kalkyl
             </h1>
@@ -150,6 +162,7 @@ export default function App() {
               inputs={inputs} 
               calculated={calculated} 
               materials={materials} 
+              projektNamn={projektNamn}
             />
           )}
         </div>

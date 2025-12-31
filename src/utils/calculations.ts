@@ -2,7 +2,7 @@ import type { BuildingInputs, CalculatedValues, PrislistaMaterial, MaterialRow }
 
 export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
   const {
-    roofType, includeMellanvagg, length: L, width: B, wallHeight: h_wall,
+    roofType, includeMellanvagg, grundTyp, length: L, width: B, wallHeight: h_wall,
     roofAngle: angle_deg, overhang, knut, timmerThickness: timmer_t,
     stockHeight: stock_h, ccGolv, ccStro, ccBar, avdragVaggarea, innertakTyp
   } = inputs;
@@ -84,8 +84,20 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
 
   const innerL = Math.max(L - 2 * timmer_t, 0);
   const innerB = Math.max(B - 2 * timmer_t, 0);
+  const outerArea = L * B;  // Ytterarea
   const innerArea = innerL * innerB;
-  const totalHeight = h_wall + gabelHeight;
+  
+  // Grund - höjd och antal element
+  // Plintar och betongsten bygger båda 20cm (betongsten: 2 × 10cm staplade)
+  const grundHeight = grundTyp !== 'ingen' ? 0.2 : 0;
+  
+  // Antal grundelement - fasta standardvärden
+  // Plintar: 9 st, Betongsten: 15 st (kan justeras manuellt i Material-fliken)
+  const antalPlintar = 9;
+  const antalBetongsten = 15;
+  const antalGrundElement = grundTyp === 'plintar' ? antalPlintar : antalBetongsten;
+  
+  const totalHeight = h_wall + gabelHeight + grundHeight;
 
   // Invändig omkrets och väggarea
   const innerOmkrets = 2 * (innerL + innerB);
@@ -127,11 +139,12 @@ export function calculateBuilding(inputs: BuildingInputs): CalculatedValues {
     vaggAreaNetto,
     innerVaggArea,
     innertakArea,
-    roofArea, innerArea, innerL, innerB, gabelHeight, totalHeight,
+    roofArea, outerArea, innerArea, innerL, innerB, gabelHeight, grundHeight, totalHeight,
     golvasLen, stroLaktLen, barLaktLen, roofLenEff, roofSlope,
     meterPerVarv,
     syllOmkrets,
-    innerOmkrets
+    innerOmkrets,
+    antalGrundElement
   };
 }
 
@@ -152,13 +165,25 @@ export function calculateMaterialQuantities(
 
     // Calculate quantity based on category and article
     if (mat.kategori === 'Golv') {
-      // Floor materials are based on innerArea (m²)
-      // Om MangdPerM2 är 0 eller saknas, använd 1 (hela golvytan)
-      const faktor = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1;
-      mangd = innerArea * faktor;
-      // Avrunda uppåt för styck-material (st)
-      if (mat.enhet === 'st') {
-        mangd = Math.ceil(mangd);
+      // Stödregel 45x45 beräknas på gavelväggarnas insida längd (2 × innerB)
+      if (mat.artikel === 'Stödregel 45x45') {
+        mangd = 2 * calculated.innerB;  // Två gavelväggar
+      } else if (mat.artikel === 'Bärlina 45x95') {
+        // Bärlina = stommens bredd (B), används vid både plintar och betongsten
+        if (inputs.grundTyp !== 'ingen') {
+          mangd = inputs.width;  // Stommens bredd (B)
+        } else {
+          mangd = 0;  // Ingen bärlina utan grund
+        }
+      } else {
+        // Floor materials are based on innerArea (m²)
+        // Om MangdPerM2 är 0 eller saknas, använd 1 (hela golvytan)
+        const faktor = mat.mangdPerM2 > 0 ? mat.mangdPerM2 : 1;
+        mangd = innerArea * faktor;
+        // Avrunda uppåt för styck-material (st)
+        if (mat.enhet === 'st') {
+          mangd = Math.ceil(mangd);
+        }
       }
     } else if (mat.kategori === 'Stomme') {
       // Stomme materials - check which ones use wall area vs syllomkrets
@@ -170,6 +195,9 @@ export function calculateMaterialQuantities(
       } else if (mat.artikel === 'Syllvirke 45x95') {
         // Syllvirke ligger under väggarna, inte under knutarna
         mangd = syllOmkrets;
+      } else if (mat.artikel === 'Dragstång') {
+        // Fast antal dragstänger
+        mangd = 6;
       }
     } else if (mat.kategori === 'Tak') {
       // Roof materials
@@ -224,11 +252,25 @@ export function calculateMaterialQuantities(
         mangd = innerArea * mat.mangdPerM2;
       }
     } else if (mat.kategori === 'Grund') {
-      // Foundation materials based on inner area
-      if (mat.mangdPerM2 > 0) {
+      // Foundation materials - plintar or betongsten based on grundTyp
+      // Fasta standardvärden: 9 plintar eller 15 betongsten
+      if (mat.artikel === 'Plintar' && inputs.grundTyp === 'plintar') {
+        mangd = 9;  // Fast antal plintar
+      } else if (mat.artikel === 'Betongsten 40x40x10' && inputs.grundTyp === 'betongsten') {
+        mangd = 15;  // Fast antal betongsten
+      } else if (mat.mangdPerM2 > 0) {
         mangd = innerArea * mat.mangdPerM2;
       }
     }
+
+    // För "Timmer (tillverkning)" används priserna från ekonomi-inställningarna
+    const isTimmer = mat.artikel === 'Timmer (tillverkning)';
+    const inkopspris = isTimmer ? inputs.prisTimmerIn : mat.inkopspris;
+    // För timmer beräknas påslaget från ekonomi-inställningarna
+    const spillPct = isTimmer ? 0 : mat.spillPct;
+    const paslagPct = isTimmer 
+      ? Math.round((inputs.prisTimmerUt / inputs.prisTimmerIn - 1) * 100) 
+      : mat.paslagPct;
 
     return {
       id: `mat-${index}`,
@@ -237,8 +279,9 @@ export function calculateMaterialQuantities(
       enhet: mat.enhet,
       mangdPerM2: mat.mangdPerM2,
       mangd: Math.round(mangd * 100) / 100,
-      inkopspris: mat.inkopspris,
-      forsaljningspris: mat.forsaljningspris,
+      inkopspris,
+      spillPct,
+      paslagPct,
       enhetstid: mat.enhetstid,
       taMed: mat.taMed && mangd > 0,
       notering: mat.notering,
@@ -258,4 +301,32 @@ export function formatCurrency(num: number): string {
     minimumFractionDigits: 0, 
     maximumFractionDigits: 0 
   }) + ' kr';
+}
+
+// Formatera tid i timmar och minuter (t.ex. "2h 30min" eller "45min")
+export function formatTime(hours: number): string {
+  if (hours === 0) return '0min';
+  
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  
+  if (h === 0) {
+    return `${m}min`;
+  } else if (m === 0) {
+    return `${h}h`;
+  } else {
+    return `${h}h ${m}min`;
+  }
+}
+
+// Kort format för tabeller (t.ex. "2:30" eller "0:45")
+export function formatTimeShort(hours: number): string {
+  if (hours === 0) return '0:00';
+  
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  
+  return `${h}:${m.toString().padStart(2, '0')}`;
 }

@@ -109,9 +109,9 @@ function parseEkonomiSheet(workbook: XLSX.WorkBook): EkonomiSettings {
 
 function getDefaultEkonomi(): EkonomiSettings {
   return {
-    prisTimmerIn: 60,
-    prisTimmerUt: 120,
-    timkostnad: 450,
+    prisTimmerIn: 458,
+    prisTimmerUt: 850,
+    timkostnad: 550,
     momsPct: 25,
   };
 }
@@ -126,7 +126,8 @@ function parsePrislista(data: unknown[]): PrislistaMaterial[] {
       mangdPerM2: Number(r['MangdPerM2'] || r['mangdPerM2'] || r['Mängd/m2'] || 0),
       enhetstid: Number(r['Enhetstid'] || r['enhetstid'] || 0),
       inkopspris: Number(r['Inkopspris'] || r['inkopspris'] || r['Inköpspris'] || 0),
-      forsaljningspris: Number(r['Forsaljningspris'] || r['forsaljningspris'] || r['Försäljningspris'] || 0),
+      spillPct: Number(r['SpillPct'] || r['spillPct'] || r['Spill%'] || 10),  // Default 10%
+      paslagPct: Number(r['PaslagPct'] || r['paslagPct'] || r['Påslag%'] || 30),  // Default 30%
       taMed: r['TaMed'] === true || r['TaMed'] === 'TRUE' || r['TaMed'] === 1 || r['taMed'] === true,
       notering: String(r['Notering'] || r['notering'] || ''),
     };
@@ -137,25 +138,31 @@ function parsePrislista(data: unknown[]): PrislistaMaterial[] {
 function getHardcodedDefaults(): PrislistaMaterial[] {
   return [
     // GOLV
-    { kategori: "Golv", artikel: "Golvreglar 45x145-220", enhet: "lm", mangdPerM2: 1.67, enhetstid: 0.20, inkopspris: 45, forsaljningspris: 85, taMed: true, notering: "Impregnerad" },
-    { kategori: "Golv", artikel: "Stödregel 45x45", enhet: "lm", mangdPerM2: 0.41, enhetstid: 0.06, inkopspris: 15, forsaljningspris: 30, taMed: true, notering: "Impregnerad" },
-    { kategori: "Golv", artikel: "Trallgolv 120mm", enhet: "lm", mangdPerM2: 8.4, enhetstid: 0.035, inkopspris: 25, forsaljningspris: 45, taMed: true, notering: "9.52 lm/m²" },
+    { kategori: "Golv", artikel: "Golvreglar 45x145-220", enhet: "lm", mangdPerM2: 1.67, enhetstid: 0.20, inkopspris: 45, spillPct: 10, paslagPct: 30, taMed: true, notering: "Impregnerad" },
+    { kategori: "Golv", artikel: "Stödregel 45x45", enhet: "lm", mangdPerM2: 0.41, enhetstid: 0.06, inkopspris: 15, spillPct: 10, paslagPct: 30, taMed: true, notering: "Impregnerad" },
+    { kategori: "Golv", artikel: "Trallgolv 120mm", enhet: "lm", mangdPerM2: 8.4, enhetstid: 0.035, inkopspris: 25, spillPct: 10, paslagPct: 30, taMed: true, notering: "9.52 lm/m²" },
+    { kategori: "Golv", artikel: "Bärlina 45x95", enhet: "lm", mangdPerM2: 0, enhetstid: 0.1, inkopspris: 25, spillPct: 10, paslagPct: 30, taMed: true, notering: "Stommens bredd, för betongstensgrund" },
     
     // STOMME
-    { kategori: "Stomme", artikel: "Timmerväggar", enhet: "m2", mangdPerM2: 1.0, enhetstid: 1.50, inkopspris: 450, forsaljningspris: 850, taMed: true, notering: "Väggarea" },
-    { kategori: "Stomme", artikel: "Syllvirke 45x95", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.10, inkopspris: 25, forsaljningspris: 45, taMed: true, notering: "Perimeter" },
+    { kategori: "Stomme", artikel: "Timmerväggar", enhet: "m2", mangdPerM2: 1.0, enhetstid: 1.50, inkopspris: 450, spillPct: 0, paslagPct: 30, taMed: true, notering: "Väggarea" },
+    { kategori: "Stomme", artikel: "Syllvirke 45x95", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.10, inkopspris: 25, spillPct: 10, paslagPct: 30, taMed: true, notering: "Perimeter" },
+    { kategori: "Stomme", artikel: "Dragstång", enhet: "st", mangdPerM2: 0, enhetstid: 0.15, inkopspris: 90, spillPct: 0, paslagPct: 15, taMed: true, notering: "Fast antal: 6 st" },
     
     // TAK
-    { kategori: "Tak", artikel: "Takåsar", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.15, inkopspris: 85, forsaljningspris: 150, taMed: true, notering: "Antal × taklängd" },
-    { kategori: "Tak", artikel: "Råspont", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.20, inkopspris: 95, forsaljningspris: 165, taMed: true, notering: "" },
-    { kategori: "Tak", artikel: "Underlagspapp", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.05, inkopspris: 35, forsaljningspris: 55, taMed: true, notering: "" },
-    { kategori: "Tak", artikel: "Ströläkt 12x50", enhet: "lm", mangdPerM2: 2.0, enhetstid: 0.04, inkopspris: 8, forsaljningspris: 15, taMed: true, notering: "c/c 0.6" },
-    { kategori: "Tak", artikel: "Bärläkt 28x70", enhet: "lm", mangdPerM2: 1.67, enhetstid: 0.08, inkopspris: 12, forsaljningspris: 22, taMed: true, notering: "c/c 0.35" },
-    { kategori: "Tak", artikel: "Takplåt", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.25, inkopspris: 120, forsaljningspris: 195, taMed: true, notering: "" },
-    { kategori: "Tak", artikel: "Fotplåt", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.12, inkopspris: 45, forsaljningspris: 75, taMed: true, notering: "2 × taklängd" },
-    { kategori: "Tak", artikel: "Vindskivor 22x145", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.40, inkopspris: 55, forsaljningspris: 95, taMed: true, notering: "4 × takfall" },
-    { kategori: "Tak", artikel: "Takfotsbräda 22x145", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.15, inkopspris: 25, forsaljningspris: 45, taMed: true, notering: "2 × taklängd" },
-    { kategori: "Tak", artikel: "Regnvattensystem", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.20, inkopspris: 85, forsaljningspris: 145, taMed: true, notering: "2 × taklängd" },
+    { kategori: "Tak", artikel: "Takåsar", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.15, inkopspris: 85, spillPct: 10, paslagPct: 30, taMed: true, notering: "Antal × taklängd" },
+    { kategori: "Tak", artikel: "Råspont", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.20, inkopspris: 95, spillPct: 10, paslagPct: 30, taMed: true, notering: "" },
+    { kategori: "Tak", artikel: "Underlagspapp", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.05, inkopspris: 35, spillPct: 5, paslagPct: 30, taMed: true, notering: "" },
+    { kategori: "Tak", artikel: "Ströläkt 12x50", enhet: "lm", mangdPerM2: 2.0, enhetstid: 0.04, inkopspris: 8, spillPct: 10, paslagPct: 30, taMed: true, notering: "c/c 0.6" },
+    { kategori: "Tak", artikel: "Bärläkt 28x70", enhet: "lm", mangdPerM2: 1.67, enhetstid: 0.08, inkopspris: 12, spillPct: 10, paslagPct: 30, taMed: true, notering: "c/c 0.35" },
+    { kategori: "Tak", artikel: "Takplåt", enhet: "m2", mangdPerM2: 1.0, enhetstid: 0.25, inkopspris: 120, spillPct: 5, paslagPct: 30, taMed: true, notering: "" },
+    { kategori: "Tak", artikel: "Fotplåt", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.12, inkopspris: 45, spillPct: 5, paslagPct: 30, taMed: true, notering: "2 × taklängd" },
+    { kategori: "Tak", artikel: "Vindskivor 22x145", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.40, inkopspris: 55, spillPct: 10, paslagPct: 30, taMed: true, notering: "4 × takfall" },
+    { kategori: "Tak", artikel: "Takfotsbräda 22x145", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.15, inkopspris: 25, spillPct: 10, paslagPct: 30, taMed: true, notering: "2 × taklängd" },
+    { kategori: "Tak", artikel: "Regnvattensystem", enhet: "lm", mangdPerM2: 0.0, enhetstid: 0.20, inkopspris: 85, spillPct: 5, paslagPct: 30, taMed: true, notering: "2 × taklängd" },
+    
+    // GRUND
+    { kategori: "Grund", artikel: "Plintar", enhet: "st", mangdPerM2: 0, enhetstid: 0.15, inkopspris: 150, spillPct: 0, paslagPct: 30, taMed: true, notering: "20cm höga, c/c baserat på golvreglar" },
+    { kategori: "Grund", artikel: "Betongsten 40x40x10", enhet: "st", mangdPerM2: 0, enhetstid: 0.1, inkopspris: 150, spillPct: 0, paslagPct: 30, taMed: true, notering: "2 st staplade = 20cm höjd" },
   ];
 }
 
